@@ -1,16 +1,20 @@
-// Import required components from the Forge UI library
 import ForgeUI, { ContentAction, ModalDialog, render, Text, useAction, useProductContext, useState } from "@forge/ui";
 import api from "@forge/api";
 
-const getContent = async (contentId) => {
+/*
+Sources:
+Used to parse json: http://techslides.com/how-to-parse-and-search-json-in-javascript
+Used in setup and accessing Forge API: https://developer.atlassian.com/platform/forge/macros-in-the-page/#next-steps
+*/
+ 
+const get_content = async (contentId) => {
     const response = await api.asApp().requestConfluence(`/wiki/rest/api/content/${contentId}?expand=body.atlas_doc_format`);
 
     if (!response.ok) {
-        const err = `Error while getContent with contentId ${contentId}: ${response.status} ${response.statusText}`;
+        const err = `Error while get_content with contentId ${contentId}: ${response.status} ${response.statusText}`;
         console.error(err);
         throw new Error(err);
     }
-
     return await response.json();
 };
 
@@ -24,15 +28,14 @@ function count_words(str) {
 
   return num_words;
   return str[0].split(" ").length;
-
 }
-//return an array of values that match on a certain key
-function getValues(obj, key) {
+
+function get_values(obj, key) {
     var objects = [];
     for (var i in obj) {
         if (!obj.hasOwnProperty(i)) continue;
         if (typeof obj[i] == 'object') {
-            objects = objects.concat(getValues(obj[i], key));
+            objects = objects.concat(get_values(obj[i], key));
         } else if (i == key) {
             objects.push(obj[i]);
         }
@@ -40,40 +43,13 @@ function getValues(obj, key) {
     return objects;
 }
 
-const countMacros = (data) => {
+const countWords = (data) => {
     if (!data || !data.body || !data.body.atlas_doc_format || !data.body.atlas_doc_format.value) {
         return 5;
     }
-
-    const { body: { atlas_doc_format: { value } } } = data;
-    const { content: contentList } = JSON.parse(value);
-
-    //return data.body.atlas_doc_format.value;
-
-    var return_data = [];
-    var num_words = 5;
-    //first element is title, second element number of words
-    return_data[0] = data.title;
-    return_data[1] = data.body.atlas_doc_format.value;
-    //return data.body.atlas_doc_format.value;
-
     var jsoned = JSON.parse(data.body.atlas_doc_format.value);
-
-    var jsonified = jsoned['content'][0]['content'][0]['content'];
-    var values = getValues(jsoned, 'text');
-    //return values;
-    //return typeof data.body.atlas_doc_format.value;
+    var values = get_values(jsoned, 'text');
     return count_words(values);
-
-    //return JSON.stringify(data, null, 4);;
-
-
-
-    const macros = contentList.filter((content) => {
-        return content.type === "extension";
-    });
-
-    return macros.length;
 };
 
 const App = () => {
@@ -85,14 +61,14 @@ const App = () => {
     const { contentId } = useProductContext();
     const [data] = useAction(
         () => null,
-        async () => await getContent(contentId)
+        async () => await get_content(contentId)
     );
 
-    const macroCount = countMacros(data);
+    const wordCount = countWords(data);
 
     return (
         <ModalDialog header="Word counter:" onClose={() => setOpen(false)}>
-            <Text>{`Number of words: ${macroCount}`}</Text>
+            <Text>{`Number of words: ${wordCount}`}</Text>
         </ModalDialog>
     );
 };
