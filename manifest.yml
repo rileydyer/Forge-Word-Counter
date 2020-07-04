@@ -1,0 +1,12 @@
+modules:
+  confluence:contentAction:
+    - key: word-counter-
+      function: main
+      title: Word Counter
+      description: Counts words on Confluence page
+  function:
+    - key: main
+      handler: index.run
+app:
+  id: 'ari:cloud:ecosystem::app/0c068ed3-69bb-43a5-8176-4f772676a54a'
+  name: Word Counter
